@@ -3,7 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>厳選フィード</title>
+  <title>YouFeed</title>
+  <meta name="apple-mobile-web-app-title" content="YouFeed">
+  <link id="favicon" rel="icon" type="image/png">
+  <link id="apple-icon" rel="apple-touch-icon">
+  <script>
+    // 画像ファイル不要でタブ＆スマホホーム画面用アイコンを自動生成
+    (function() {
+      const bg = '#cc0000'; // アイコン背景色（例: 赤 #cc0000 / 青 #1d4ed8 / 緑 #15803d / 黒 #222222）
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+        <rect width="180" height="180" rx="40" fill="${bg}"/>
+        <polygon points="72,54 72,126 130,90" fill="#ffffff"/>
+      </svg>`;
+      const img = new Image();
+      img.onload = function() {
+        const c = document.createElement('canvas');
+        c.width = 180; c.height = 180;
+        c.getContext('2d').drawImage(img, 0, 0);
+        const png = c.toDataURL('image/png');
+        document.getElementById('favicon').href = png;
+        document.getElementById('apple-icon').href = png;
+      };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    })();
+  </script>
   <style>
     body {
       background-color: #0f0f0f;
@@ -380,7 +403,7 @@
   <div id="app-view" style="display:none;">
     <header>
       <div class="header-left">
-        <h1>厳選フィード</h1>
+        <h1></h1>
         <span class="status-text" id="status-text"></span>
       </div>
       <div class="header-right">
