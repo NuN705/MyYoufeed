@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>厳選フィード</title>
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #f1f1f1;
+      font-family: "Roboto", "Noto Sans JP", sans-serif;
+      margin: 0;
+      padding: 16px 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #272727;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-left {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    .status-text { font-size: 12px; color: #aaa; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+    .btn {
+      background: #272727;
+      color: #f1f1f1;
+      border: none;
+      padding: 7px 13px;
+      border-radius: 18px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #3f3f3f; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: #f1f1f1;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .icon-btn:hover { background: #272727; }
+    .icon-btn.spinning svg { animation: spin 0.9s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* 初回セットアップ画面 */
+    .setup-box {
+      max-width: 440px;
+      margin: 60px auto;
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .setup-box h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+    .setup-box p {
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.6;
+    }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #121212;
+      color: #f1f1f1;
+      border: 1px solid #3f3f3f;
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 13px;
+      outline: none;
+    }
+    .field input:focus { border-color: #3ea6ff; }
+    .primary-btn {
+      width: 100%;
+      background: #3ea6ff;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary-btn:hover { background: #65b8ff; }
+
+    /* YouTube風 歯車設定オーバーレイ */
+    .settings-menu {
+      display: none;
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 320px;
+      max-width: calc(100vw - 32px);
+      max-height: 82vh;
+      overflow-y: auto;
+      background: #212121;
+      border: 1px solid #383838;
+      border-radius: 12px;
+      padding: 12px 0;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.7);
+      z-index: 100;
+    }
+    .settings-menu.open { display: block; }
+    .menu-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #aaa;
+      padding: 6px 16px 8px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 6px;
+    }
+    .menu-divider {
+      height: 1px;
+      background: #333;
+      margin: 12px 0;
+    }
+    .menu-group { padding: 7px 16px; }
+    .menu-group label {
+      display: block;
+      font-size: 12px;
+      color: #bbb;
+      margin-bottom: 6px;
+    }
+    .menu-group select, .menu-group input[type="text"], .menu-group input[type="password"] {
+      width: 100%;
+      box-sizing: border-box;
+      background: #121212;
+      color: #f1f1f1;
+      border: 1px solid #3f3f3f;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+    .size-pills {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .pill {
+      background: #121212;
+      color: #ccc;
+      border: 1px solid #3f3f3f;
+      border-radius: 8px;
+      padding: 6px 0;
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .pill.active {
+      background: #f1f1f1;
+      color: #0f0f0f;
+      font-weight: 600;
+      border-color: #f1f1f1;
+    }
+
+    /* チャンネル追加・削除エリア */
+    .add-ch-row { display: flex; gap: 6px; }
+    .add-ch-row input { flex: 1; min-width: 0; font-size: 12px; }
+    .add-ch-btn {
+      background: #3ea6ff;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .add-ch-btn:disabled { opacity: 0.5; cursor: default; }
+    .ch-msg { font-size: 11px; margin-top: 6px; min-height: 14px; }
+    .ch-msg.ok { color: #4ade80; }
+    .ch-msg.ng { color: #ff6b6b; }
+    .ch-list {
+      list-style: none;
+      margin: 6px 0 0;
+      padding: 0;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .ch-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      gap: 8px;
+    }
+    .ch-item:hover { background: #2c2c2c; }
+    .ch-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #e5e5e5;
+    }
+    .ch-del-btn {
+      background: transparent;
+      border: 1px solid #444;
+      color: #aaa;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .ch-del-btn:hover { background: #cc0000; border-color: #cc0000; color: #fff; }
+
+    /* 動画グリッド */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px 16px;
+    }
+    .grid.size-small { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+    .grid.size-medium { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .grid.size-large { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+    @media (max-width: 600px) {
+      .grid.size-small { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; }
+      .grid.size-medium, .grid.size-large { grid-template-columns: 1fr; }
+    }
+
+    .card { position: relative; display: flex; flex-direction: column; }
+    .card.watched .thumb-wrap img { opacity: 0.45; }
+    .card.watched .title { color: #999; }
+    .card-link { text-decoration: none; color: inherit; display: block; }
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #222;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .card-link:hover .thumb-wrap img { transform: scale(1.02); }
+    .duration {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .watched-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #ddd;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid #444;
+    }
+    .hide-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(15, 15, 15, 0.82);
+      color: #f1f1f1;
+      border: 1px solid rgba(255,255,255,0.15);
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      opacity: 0.85;
+    }
+    .hide-btn:hover { background: #cc0000; border-color: #cc0000; opacity: 1; }
+    .meta { margin-top: 10px; }
+    .title {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .sub-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #aaaaaa;
+      gap: 8px;
+    }
+    .unwatch-link {
+      color: #3ea6ff;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .unwatch-link:hover { text-decoration: underline; }
+    .empty {
+      text-align: center;
+      color: #888;
+      margin-top: 80px;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+    .err {
+      color: #ff6b6b;
+      padding: 12px 16px;
+      background: #1f1414;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 初回接続セットアップ -->
+  <div id="setup-view" class="setup-box" style="display:none;">
+    <h2>初回接続設定</h2>
+    <p>この情報はブラウザ内（端末）にのみ保存され、外部には公開されません。</p>
+    <div class="field">
+      <label for="setup-url">GAS ウェブアプリ URL</label>
+      <input type="text" id="setup-url" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <div class="field">
+      <label for="setup-token">合言葉（API_TOKEN）</label>
+      <input type="password" id="setup-token" placeholder="Code.gs に設定した合言葉">
+    </div>
+    <button class="primary-btn" onclick="saveInitialAuth()">接続して開始</button>
+  </div>
+
+  <!-- メイン画面 -->
+  <div id="app-view" style="display:none;">
+    <header>
+      <div class="header-left">
+        <h1>厳選フィード</h1>
+        <span class="status-text" id="status-text"></span>
+      </div>
+      <div class="header-right">
+        <button class="btn" id="hide-watched-btn" onclick="handleHideAllWatched()">視聴済みを一括非表示</button>
+        <button class="icon-btn" id="refresh-btn" title="今すぐYouTubeから新着取得" onclick="manualFetch()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="gear-btn" title="設定" onclick="toggleSettings(event)">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm9.4 3.5c.04-.33.07-.66.07-1s-.03-.67-.07-1l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.28 7.28 0 0 0-1.73-1l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.63.26-1.21.6-1.73 1l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64L4.57 11c-.04.33-.07.66-.07 1s.03.67.07 1l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1c.52.4 1.1.74 1.73 1l.38 2.65c.05.24.26.42.49.42h4c.24 0 .44-.18.49-.42l.38-2.65c.63-.26 1.21-.6 1.73-1l2.49 1a.5.5 0 0 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64L21.4 13z"/>
+          </svg>
+        </button>
+
+        <!-- 歯車設定オーバーレイ -->
+        <div class="settings-menu" id="settings-menu" onclick="event.stopPropagation()">
+          <div class="menu-section-title">表示設定</div>
+          <div class="menu-group">
+            <label for="sort-select">並び順</label>
+            <select id="sort-select" onchange="updateSetting('sort', this.value)">
+              <option value="newest">公開日時が新しい順</option>
+              <option value="oldest">公開日時が古い順</option>
+              <option value="unwatched_first">未視聴を上にまとめる</option>
+            </select>
+          </div>
+          <div class="menu-group">
+            <label for="limit-select">チャンネルごとの表示保持数</label>
+            <select id="limit-select" onchange="updateSetting('limit', Number(this.value))">
+              <option value="1">1本</option>
+              <option value="2">2本</option>
+              <option value="3">3本</option>
+              <option value="4">4本</option>
+              <option value="5">5本（デフォルト）</option>
+              <option value="6">6本</option>
+              <option value="7">7本</option>
+              <option value="8">8本</option>
+              <option value="9">9本</option>
+              <option value="10">10本</option>
+            </select>
+          </div>
+          <div class="menu-group">
+            <label>サムネイルサイズ</label>
+            <div class="size-pills">
+              <div class="pill" data-size="large" onclick="updateSetting('size', 'large')">大</div>
+              <div class="pill" data-size="medium" onclick="updateSetting('size', 'medium')">中</div>
+              <div class="pill" data-size="small" onclick="updateSetting('size', 'small')">小</div>
+            </div>
+          </div>
+
+          <div class="menu-divider"></div>
+          <div class="menu-section-title">チャンネル管理（UU自動変換）</div>
+          <div class="menu-group">
+            <label for="ch-input">チャンネルを追加（URL / @ハンドル / ID）</label>
+            <div class="add-ch-row">
+              <input type="text" id="ch-input" placeholder="例: @tsundoku_ch や URL" onkeydown="if(event.key==='Enter') handleAddChannel()">
+              <button class="add-ch-btn" id="add-ch-btn" onclick="handleAddChannel()">追加</button>
+            </div>
+            <div class="ch-msg" id="ch-msg"></div>
+            <ul class="ch-list" id="ch-list"></ul>
+          </div>
+
+          <div class="menu-divider"></div>
+          <div class="menu-section-title">接続設定</div>
+          <div class="menu-group">
+            <button class="btn" style="width:100%; font-size:12px;" onclick="resetAuth()">GAS URL・合言葉を再設定する</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="error-box"></div>
+    <div class="grid size-medium" id="grid"></div>
+    <div class="empty" id="empty" style="display:none;">
+      表示する動画はありません。
+    </div>
+  </div>
+
+  <script>
+    const AUTH_KEY = 'yt_feed_auth';
+    const SETTINGS_KEY = 'yt_feed_settings';
+    const CACHE_KEY = 'yt_feed_cache';
+
+    let auth = loadJson(AUTH_KEY, null);
+    let settings = { sort: 'newest', limit: 5, size: 'medium', ...loadJson(SETTINGS_KEY, {}) };
+    let cache = loadJson(CACHE_KEY, { videos: [], channels: [] });
+    let allVideos = cache.videos || [];
+    let registeredChannels = cache.channels || [];
+
+    function loadJson(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function saveCache() {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        videos: allVideos,
+        channels: registeredChannels
+      }));
+    }
+
+    // GAS API呼び出し共通関数（CORSプリフライト回避のため text/plain で送信）
+    async function callGas(payload) {
+      const res = await fetch(auth.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ ...payload, token: auth.token })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error || '通信エラーが発生しました');
+      }
+      return data;
+    }
+
+    function saveInitialAuth() {
+      const url = document.getElementById('setup-url').value.trim();
+      const token = document.getElementById('setup-token').value.trim();
+      if (!url || !token) {
+        alert('URLと合言葉の両方を入力してください。');
+        return;
+      }
+      auth = { url, token };
+      localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+      bootApp();
+    }
+
+    function resetAuth() {
+      if (!confirm('保存されているGAS URLと合言葉をリセットしますか？')) return;
+      localStorage.removeItem(AUTH_KEY);
+      location.reload();
+    }
+
+    function bootApp() {
+      if (!auth || !auth.url || !auth.token) {
+        document.getElementById('setup-view').style.display = 'block';
+        document.getElementById('app-view').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('setup-view').style.display = 'none';
+      document.getElementById('app-view').style.display = 'block';
+
+      applySettingsToUI();
+      renderChannelList();
+
+      // 1. キャッシュがあれば0.0秒で即座に描画
+      render(allVideos.length > 0 ? '同期中...' : '読み込み中...');
+
+      // 2. 裏側でシートの最新データを高速取得（1時間トリガーが収集済みのデータ）
+      syncFromSheet();
+    }
+
+    async function syncFromSheet() {
+      const errBox = document.getElementById('error-box');
+      errBox.innerHTML = '';
+      try {
+        const data = await callGas({ action: 'get' });
+        allVideos = data.videos || [];
+        registeredChannels = data.channels || [];
+        saveCache();
+        renderChannelList();
+
+        // 初回でシートが空ならそのままYouTubeから初回取得も走らせる
+        if (allVideos.length === 0 && registeredChannels.length > 0) {
+          await manualFetch();
+          return;
+        }
+
+        const now = new Date();
+        const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        render(`${timeStr} 同期済`);
+      } catch (e) {
+        errBox.innerHTML = `<div class="err">エラー: ${escapeHtml(e.message)}</div>`;
+        render('同期失敗');
+      }
+    }
+
+    async function manualFetch() {
+      const btn = document.getElementById('refresh-btn');
+      const errBox = document.getElementById('error-box');
+      btn.classList.add('spinning');
+      errBox.innerHTML = '';
+      render('YouTube新着確認中...');
+
+      try {
+        const data = await callGas({ action: 'fetch' });
+        allVideos = data.videos || [];
+        registeredChannels = data.channels || [];
+        saveCache();
+        renderChannelList();
+        const now = new Date();
+        const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        render(`${timeStr} 更新済`);
+      } catch (e) {
+        errBox.innerHTML = `<div class="err">更新エラー: ${escapeHtml(e.message)}</div>`;
+        render('更新エラー');
+      } finally {
+        btn.classList.remove('spinning');
+      }
+    }
+
+    function applySettingsToUI() {
+      document.getElementById('sort-select').value = settings.sort;
+      document.getElementById('limit-select').value = String(settings.limit);
+      document.querySelectorAll('.pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.size === settings.size);
+      });
+      document.getElementById('grid').className = `grid size-${settings.size}`;
+    }
+
+    function updateSetting(key, value) {
+      settings[key] = value;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      applySettingsToUI();
+      render();
+    }
+
+    function toggleSettings(e) {
+      e.stopPropagation();
+      document.getElementById('settings-menu').classList.toggle('open');
+    }
+
+    document.addEventListener('click', () => {
+      const menu = document.getElementById('settings-menu');
+      if (menu) menu.classList.remove('open');
+    });
+
+    function renderChannelList() {
+      const listEl = document.getElementById('ch-list');
+      listEl.innerHTML = '';
+      if (!registeredChannels || registeredChannels.length === 0) {
+        listEl.innerHTML = '<li class="ch-item" style="color:#888;">登録チャンネルがありません</li>';
+        return;
+      }
+      registeredChannels.forEach(ch => {
+        const li = document.createElement('li');
+        li.className = 'ch-item';
+        li.innerHTML = `
+          <span class="ch-item-name" title="${escapeHtml(ch.id)}">${escapeHtml(ch.name)}</span>
+          <button class="ch-del-btn" onclick="handleRemoveChannel('${escapeHtml(ch.id)}', '${escapeHtml(ch.name)}')">削除</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    async function handleAddChannel() {
+      const input = document.getElementById('ch-input');
+      const btn = document.getElementById('add-ch-btn');
+      const msg = document.getElementById('ch-msg');
+      const val = input.value.trim();
+      if (!val) return;
+
+      btn.disabled = true;
+      btn.textContent = '確認中';
+      msg.className = 'ch-msg';
+      msg.textContent = 'チャンネル情報を取得しています...';
+
+      try {
+        const res = await callGas({ action: 'addChannel', input: val });
+        input.value = '';
+        registeredChannels = res.channels || [];
+        allVideos = res.videos || [];
+        saveCache();
+        renderChannelList();
+        render('追加完了');
+        msg.className = 'ch-msg ok';
+        msg.textContent = `「${res.addedName}」を追加しました`;
+      } catch (e) {
+        msg.className = 'ch-msg ng';
+        msg.textContent = e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '追加';
+      }
+    }
+
+    async function handleRemoveChannel(chId, chName) {
+      const msg = document.getElementById('ch-msg');
+      registeredChannels = registeredChannels.filter(c => c.id !== chId);
+      saveCache();
+      renderChannelList();
+      render();
+      msg.className = 'ch-msg';
+      msg.textContent = `「${chName}」を削除中...`;
+
+      try {
+        const res = await callGas({ action: 'removeChannel', channelId: chId });
+        registeredChannels = res.channels || [];
+        saveCache();
+        renderChannelList();
+        render();
+        msg.className = 'ch-msg ok';
+        msg.textContent = `「${chName}」を削除しました`;
+      } catch (e) {
+        msg.className = 'ch-msg ng';
+        msg.textContent = e.message;
+      }
+    }
+
+    function getFilteredAndSortedVideos() {
+      const activeNames = new Set(registeredChannels.map(c => c.name));
+      const source = activeNames.size > 0
+        ? allVideos.filter(v => activeNames.has(v.channel))
+        : allVideos;
+
+      const byNewest = [...source].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+      const perChannelCount = {};
+      const kept = [];
+
+      for (const v of byNewest) {
+        const ch = v.channel || 'unknown';
+        perChannelCount[ch] = (perChannelCount[ch] || 0) + 1;
+        if (perChannelCount[ch] <= settings.limit) {
+          kept.push(v);
+        }
+      }
+
+      if (settings.sort === 'oldest') {
+        kept.sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+      } else if (settings.sort === 'unwatched_first') {
+        kept.sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === 'UNWATCHED' ? -1 : 1;
+          }
+          return b.publishedAt.localeCompare(a.publishedAt);
+        });
+      }
+      return kept;
+    }
+
+    function render(syncLabel) {
+      const grid = document.getElementById('grid');
+      const empty = document.getElementById('empty');
+      const statusText = document.getElementById('status-text');
+      const hideWatchedBtn = document.getElementById('hide-watched-btn');
+
+      const list = getFilteredAndSortedVideos();
+      const unwatchedCount = list.filter(v => v.status === 'UNWATCHED').length;
+      const watchedCount = list.filter(v => v.status === 'WATCHED').length;
+
+      const suffix = syncLabel ? `（${syncLabel}）` : '';
+      statusText.textContent = `未視聴 ${unwatchedCount}本 / 視聴済 ${watchedCount}本${suffix}`;
+      hideWatchedBtn.disabled = watchedCount === 0;
+
+      grid.innerHTML = '';
+      if (list.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      list.forEach(v => {
+        const isWatched = v.status === 'WATCHED';
+        const card = document.createElement('div');
+        card.className = `card${isWatched ? ' watched' : ''}`;
+
+        card.innerHTML = `
+          <button class="hide-btn" title="この動画を非表示にする" onclick="handleHideOne(event, '${v.id}')">×</button>
+          <a class="card-link" href="https://www.youtube.com/watch?v=${v.id}" target="_blank" rel="noopener noreferrer" onclick="handleWatch('${v.id}')">
+            <div class="thumb-wrap">
+              <img src="${v.thumbnail}" alt="">
+              ${isWatched ? '<span class="watched-badge">視聴済</span>' : ''}
+              <span class="duration">${v.duration}</span>
+            </div>
+            <div class="meta">
+              <div class="title">${escapeHtml(v.title)}</div>
+            </div>
+          </a>
+          <div class="sub-row">
+            <span>${escapeHtml(v.channel)} ・ ${v.publishedAt}</span>
+            ${isWatched ? `<button class="unwatch-link" onclick="handleUnwatch('${v.id}')">未視聴に戻す</button>` : ''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function handleWatch(videoId) {
+      const target = allVideos.find(v => v.id === videoId);
+      if (target && target.status !== 'WATCHED') {
+        target.status = 'WATCHED';
+        saveCache();
+        render();
+        callGas({ action: 'status', videoId, status: 'WATCHED' }).catch(() => {});
+      }
+    }
+
+    function handleUnwatch(videoId) {
+      const target = allVideos.find(v => v.id === videoId);
+      if (target) {
+        target.status = 'UNWATCHED';
+        saveCache();
+        render();
+        callGas({ action: 'status', videoId, status: 'UNWATCHED' }).catch(() => {});
+      }
+    }
+
+    function handleHideOne(e, videoId) {
+      e.preventDefault();
+      e.stopPropagation();
+      allVideos = allVideos.filter(v => v.id !== videoId);
+      saveCache();
+      render();
+      callGas({ action: 'status', videoId, status: 'HIDDEN' }).catch(() => {});
+    }
+
+    function handleHideAllWatched() {
+      const visibleIds = new Set(getFilteredAndSortedVideos().filter(v => v.status === 'WATCHED').map(v => v.id));
+      if (visibleIds.size === 0) return;
+      allVideos = allVideos.filter(v => !visibleIds.has(v.id));
+      saveCache();
+      render();
+      callGas({ action: 'hideAllWatched' }).catch(() => {});
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    bootApp();
+  </script>
+</body>
+</html>
