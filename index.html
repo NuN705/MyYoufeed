@@ -8,9 +8,8 @@
   <link id="favicon" rel="icon" type="image/png">
   <link id="apple-icon" rel="apple-touch-icon">
   <script>
-    // 画像ファイル不要でタブ＆スマホホーム画面用アイコンを自動生成
     (function() {
-      const bg = '#cc0000'; // アイコン背景色（例: 赤 #cc0000 / 青 #1d4ed8 / 緑 #15803d / 黒 #222222）
+      const bg = '#cc0000';
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
         <rect width="180" height="180" rx="40" fill="${bg}"/>
         <polygon points="72,54 72,126 130,90" fill="#ffffff"/>
@@ -96,23 +95,10 @@
       border-radius: 14px;
       padding: 24px;
     }
-    .setup-box h2 {
-      margin: 0 0 8px;
-      font-size: 17px;
-    }
-    .setup-box p {
-      margin: 0 0 18px;
-      font-size: 13px;
-      color: #aaa;
-      line-height: 1.6;
-    }
+    .setup-box h2 { margin: 0 0 8px; font-size: 17px; }
+    .setup-box p { margin: 0 0 18px; font-size: 13px; color: #aaa; line-height: 1.6; }
     .field { margin-bottom: 14px; }
-    .field label {
-      display: block;
-      font-size: 12px;
-      color: #ccc;
-      margin-bottom: 6px;
-    }
+    .field label { display: block; font-size: 12px; color: #ccc; margin-bottom: 6px; }
     .field input {
       width: 100%;
       box-sizing: border-box;
@@ -138,7 +124,7 @@
     }
     .primary-btn:hover { background: #65b8ff; }
 
-    /* YouTube風 歯車設定オーバーレイ */
+    /* 歯車設定オーバーレイ */
     .settings-menu {
       display: none;
       position: absolute;
@@ -164,18 +150,9 @@
       border-bottom: 1px solid #333;
       margin-bottom: 6px;
     }
-    .menu-divider {
-      height: 1px;
-      background: #333;
-      margin: 12px 0;
-    }
+    .menu-divider { height: 1px; background: #333; margin: 12px 0; }
     .menu-group { padding: 7px 16px; }
-    .menu-group label {
-      display: block;
-      font-size: 12px;
-      color: #bbb;
-      margin-bottom: 6px;
-    }
+    .menu-group label { display: block; font-size: 12px; color: #bbb; margin-bottom: 6px; }
     .menu-group select, .menu-group input[type="text"], .menu-group input[type="password"] {
       width: 100%;
       box-sizing: border-box;
@@ -187,11 +164,7 @@
       font-size: 13px;
       outline: none;
     }
-    .size-pills {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-    }
+    .size-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .pill {
       background: #121212;
       color: #ccc;
@@ -403,7 +376,7 @@
   <div id="app-view" style="display:none;">
     <header>
       <div class="header-left">
-        <h1></h1>
+        <h1>YouFeed</h1>
         <span class="status-text" id="status-text"></span>
       </div>
       <div class="header-right">
@@ -509,7 +482,6 @@
       }));
     }
 
-    // GAS API呼び出し共通関数（CORSプリフライト回避のため text/plain で送信）
     async function callGas(payload) {
       const res = await fetch(auth.url, {
         method: 'POST',
@@ -553,11 +525,7 @@
 
       applySettingsToUI();
       renderChannelList();
-
-      // 1. キャッシュがあれば0.0秒で即座に描画
       render(allVideos.length > 0 ? '同期中...' : '読み込み中...');
-
-      // 2. 裏側でシートの最新データを高速取得（1時間トリガーが収集済みのデータ）
       syncFromSheet();
     }
 
@@ -571,7 +539,6 @@
         saveCache();
         renderChannelList();
 
-        // 初回でシートが空ならそのままYouTubeから初回取得も走らせる
         if (allVideos.length === 0 && registeredChannels.length > 0) {
           await manualFetch();
           return;
@@ -685,13 +652,15 @@
       }
     }
 
-  async function handleRemoveChannel(chId, chName) {
+    async function handleRemoveChannel(chId, chName) {
       const msg = document.getElementById('ch-msg');
       registeredChannels = registeredChannels.filter(c => c.id !== chId);
       allVideos = allVideos.filter(v => v.channel !== chName);
       saveCache();
       renderChannelList();
       render();
+      msg.className = 'ch-msg';
+      msg.textContent = `「${chName}」を削除中...`;
 
       try {
         const res = await callGas({ action: 'removeChannel', channelId: chId });
@@ -707,12 +676,8 @@
       }
     }
 
-  function getFilteredAndSortedVideos() {
+    function getFilteredAndSortedVideos() {
       const byNewest = [...allVideos].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-      const perChannelCount = {};
-      const kept = [];
-
-      const byNewest = [...source].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       const perChannelCount = {};
       const kept = [];
 
