@@ -685,14 +685,13 @@
       }
     }
 
-    async function handleRemoveChannel(chId, chName) {
+  async function handleRemoveChannel(chId, chName) {
       const msg = document.getElementById('ch-msg');
       registeredChannels = registeredChannels.filter(c => c.id !== chId);
+      allVideos = allVideos.filter(v => v.channel !== chName);
       saveCache();
       renderChannelList();
       render();
-      msg.className = 'ch-msg';
-      msg.textContent = `「${chName}」を削除中...`;
 
       try {
         const res = await callGas({ action: 'removeChannel', channelId: chId });
@@ -708,11 +707,10 @@
       }
     }
 
-    function getFilteredAndSortedVideos() {
-      const activeNames = new Set(registeredChannels.map(c => c.name));
-      const source = activeNames.size > 0
-        ? allVideos.filter(v => activeNames.has(v.channel))
-        : allVideos;
+  function getFilteredAndSortedVideos() {
+      const byNewest = [...allVideos].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+      const perChannelCount = {};
+      const kept = [];
 
       const byNewest = [...source].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       const perChannelCount = {};
